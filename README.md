@@ -1,11 +1,11 @@
-# Engine.IO: the realtime engine
+leash.io
+========
 
-[![Build Status](https://secure.travis-ci.org/LearnBoost/engine.io.png)](http://travis-ci.org/LearnBoost/engine.io)
-[![NPM version](https://badge.fury.io/js/engine.io.png)](http://badge.fury.io/js/engine.io)
+A high-performance client-server protocol-based communication library.
 
-`Engine` is the implementation of transport-based cross-browser/cross-device
-bi-directional communication layer for
-[Socket.IO](http://github.com/learnboost/socket.io).
+[![npm version](https://badge.fury.io/js/leash.io.png)](http://badge.fury.io/js/leash.io)
+
+Forked from [`engine.io`](https://github.com/LearnBoost/engine.io), `leash.io` is a transport-based cross-browser/cross-device bi-directional communication layer for Node.js v0.8+, focused on high-performance and low-bandwidth.
 
 ## Hello World
 
@@ -14,32 +14,40 @@ bi-directional communication layer for
 #### (A) Listening on a port
 
 ```js
-var engine = require('engine.io')
-  , server = engine.listen(80)
+var leash = require('leash.io');
+var server = leash.listen(80);
 
-server.on('connection', function (socket) {
-  socket.send('utf 8 string');
+// define a message containing a string
+server.define(0x00, 'message', {data: leash.STRING});
+
+server.on('connection', function(socket) {
+  socket.send('message, {data: 'utf 8 string'});
 });
 ```
 
 #### (B) Intercepting requests for a http.Server
 
 ```js
-var engine = require('engine.io')
-  , http = require('http').createServer().listen(3000)
-  , server = engine.attach(http)
+var leash = require('leash.io');
+var http = require('http').createServer().listen(3000);
+var server = leash.attach(http);
 
-server.on('connection', function (socket) {
-  socket.on('message', function () { });
-  socket.on('close', function () { });
+// define a message containing a string
+server.define(0x00, 'message', {data: leash.STRING});
+
+server.on('connection', function(socket) {
+  socket.on('message', function(obj) {
+    obj.should.have.property('data');
+  });
+  socket.on('close', function() {});
 });
 ```
 
 #### (C) Passing in requests
 
 ```js
-var engine = require('engine.io')
-  , server = new engine.Server()
+var leash = require('engine.io');
+var server = new engine.Server();
 
 server.on('connection', function (socket) {
   socket.send('hi');
@@ -450,43 +458,16 @@ safely lazy load it without hurting user experience), etc.
 
 ## FAQ
 
-### Can I use engine without Socket.IO ?
-
-Absolutely. Although the recommended framework for building realtime applications
-is Socket.IO, since it provides fundamental features for real-world applications 
-such as multiplexing, reconnection support, etc.
-
-`Engine` is to Socket.IO what Connect is to Express. An essential piece for building
-realtime frameworks, but something you _probably_ won't be using for building
-actual applications.
-
 ### Does the server serve the client?
 
-No. The main reason is that `Engine` is meant to be bundled with frameworks.
-Socket.IO includes `Engine`, therefore serving two clients is not necessary. If
-you use Socket.IO, including
+No. The main reason is that `Engine` is meant to be bundled with frameworks. Socket.IO includes `Engine`, therefore serving two clients is not necessary.
 
-```html
-<script src="/socket.io/socket.io.js">
-```
-
-has you covered.
-
-### Can I implement `Engine` in other languages?
-
-Absolutely. The [SPEC](https://github.com/LearnBoost/engine.io-client/blob/master/SPEC.md)
-file contains the most up to date description of the implementation specification
-at all times. If you're targeting the latest stable release of `Engine`, make sure
-to look at the file in the appropriate git branch/tag.
-
-The Java/NIO implementation will be officially supported, and is being worked
-on by the author.
-
-## License 
+## License
 
 (The MIT License)
 
-Copyright (c) 2011 Guillermo Rauch &lt;guillermo@learnboost.com&gt;
+Copyright &copy; 2013 Eli Skeggs &lt;skeggse@gmail.com&gt;
+Copyright &copy; 2011 Guillermo Rauch &lt;guillermo@learnboost.com&gt;
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

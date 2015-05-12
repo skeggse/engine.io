@@ -1,18 +1,9 @@
-/*global eio,listen,request,expect*/
+/*global lio,listen,request,should*/
 
-/**
- * Test dependencies.
- */
-
-var net = require('net')
-  , http = require('http');
-
-/**
- * Tests.
- */
+var net = require('net');
+var http = require('http');
 
 describe('engine', function () {
-
   it('should expose protocol number', function () {
     expect(eio.protocol).to.be.a('number');
   });
@@ -26,7 +17,7 @@ describe('engine', function () {
   describe('listen', function () {
     it('should open a http server that returns 501', function (done) {
       var server = listen(function (port) {
-        request.get('http://localhost:%d/'.s(port), function (res) {
+        request.get('http://localhost:' + port + '/'), function (res) {
           expect(res.status).to.be(501);
           done();
         });
@@ -47,7 +38,7 @@ describe('engine', function () {
         , engine = eio.attach(server);
 
       server.listen(function () {
-        var uri = 'http://localhost:%d/engine.io/default/'.s(server.address().port);
+        var uri = 'http://localhost:' + server.address().port + '/engine.io/default/';
         request.get(uri, function (res) {
           expect(res.status).to.be(400);
           expect(res.body.code).to.be(0);
@@ -253,11 +244,11 @@ describe('engine', function () {
 
       server.listen(function () {
         var port = server.address().port;
-        request.get('http://localhost:%d/engine.io/default/'.s(port), function (res) {
+        request.get('http://localhost:' + port + '/engine.io/default/', function (res) {
           expect(res.status).to.be(400);
           expect(res.body.code).to.be(0);
           expect(res.body.message).to.be('Transport unknown');
-          request.get('http://localhost:%d/test'.s(port), function (res) {
+          request.get('http://localhost:' + port + '/test', function (res) {
             expect(res.status).to.be(200);
             expect(listeners).to.eql(2);
             server.once('close', done);

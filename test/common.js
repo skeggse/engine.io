@@ -1,47 +1,20 @@
-
-/**
- * Expose `eio` global.
- */
-
-global.eio = require('../index');
-
-/**
- * Expose client.
- */
-
-global.eioc = require('engine.io-client');
-
-/**
- * Expose `request` global.
- */
-
+global.lio = require('..');
+global.lioc = require('leash.io-client');
 global.request = require('superagent');
+global.should = require('should');
 
 /**
- * Expose `expect` global
+ * Listen shortcut that fires a callback on an ephemeral port.
  */
-
-global.expect = require('expect.js');
-
-/**
- * Listen shortcut that fires a callback on an epheemal port.
- */
-
 global.listen = function (opts, fn) {
-  if ('function' == typeof opts) {
+  if ('function' === typeof opts) {
     fn = opts;
     opts = {};
   }
 
-  var e = global.eio.listen(null, opts, function () {
+  var e = global.lio.listen(null, opts, function() {
     fn(e.httpServer.address().port);
   });
 
   return e;
 };
-
-/**
- * Sprintf util.
- */
-
-require('s').extend();

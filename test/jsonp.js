@@ -1,52 +1,53 @@
-/*global eio,eioc,listen,request,expect*/
+/*global lio,lioc,listen,request,should*/
 
 var http = require('http');
 var WebSocket = require('ws');
 
-describe('JSONP', function () {
-  before(function () {
+describe('JSONP', function() {
+  before(function() {
     // we have to override the browser's functionality for JSONP
     document = {
       body: {
-        appendChild: function () {}
-        , removeChild: function () {}
+        appendChild: function() {},
+        removeChild: function() {}
       }
-    }
+    };
 
-    document.createElement = function (name) {
+    document.createElement = function(name) {
       var self = this;
 
-      if('script' == name) {
+      if ('script' === name) {
         var script = {};
 
-        script.__defineGetter__('parentNode', function () {
+        script.__defineGetter__('parentNode', function() {
           return document.body;
         });
 
-        script.__defineSetter__('src', function (uri) {
+        script.__defineSetter__('src', function(uri) {
           request.get(uri).end(function(res) {
             eval(res.text);
           });
         });
+
         return script;
-      } else if ('form' == name) {
+      } else if ('form' === name) {
         var form = {
-          style: {}
-            , action: ''
-            , parentNode: { removeChild: function () {} }
-            , removeChild: function () {}
-            , setAttribute: function () {}
-            , appendChild: function (elem) { area: elem; }
-            , submit: function () {
-              request.post(this.action).type('form').send({ d: self.areaValue }).end(function (res) {});
-            }
-        }
+          style: {},
+          action: '',
+          parentNode: {removeChild: function() {}},
+          removeChild: function() {},
+          setAttribute: function() {},
+          appendChild: function(elem) {area: elem;},
+          submit: function() {
+            request.post(this.action).type('form').send({d: self.areaValue}).end(function(res) {});
+          }
+        };
         return form;
-      } else if ('textarea' == name) {
+      } else if ('textarea' === name) {
         var textarea = {};
 
         //a hack to be able to access the area data when form is sent
-        textarea.__defineSetter__('value', function (data) {
+        textarea.__defineSetter__('value', function(data) {
           self.areaValue = data;
         });
         return textarea;
@@ -55,27 +56,25 @@ describe('JSONP', function () {
       }
     }
 
-    document.getElementsByTagName = function (name) {
+    document.getElementsByTagName = function(name) {
       return [{
         parentNode: {
-          insertBefore: function () {}
+          insertBefore: function() {}
         }
-      }]
+      }];
     }
   });
 
-  after(function () {
-    delete document.getElementsByTagName
-      , document.createElement
-      , document;
+  after(function() {
+    delete document.getElementsByTagName, document.createElement, document;
   });
 
-  describe('handshake', function () {
-    it('should open with polling JSONP when requested', function (done) {
-      var engine = listen( { allowUpgrades: false, transports: ['polling'] }, function (port) {
-        var socket = new eioc.Socket('ws://localhost:' + port
-          , { transports: ['polling'], forceJSONP: true, upgrade: false });
-        engine.on('connection', function (socket) {
+  describe('handshake', function() {
+    it('should open with polling JSONP when requested', function(done) {
+      var leash = listen({allowUpgrades: false, transports: ['polling']}, function(port) {
+        var socket = new lioc.Socket('ws://localhost:' + port
+          , {transports: ['polling'], forceJSONP: true, upgrade: false});
+        engine.on('connection', function(socket) {
           expect(socket.transport.name).to.be('polling');
           expect(socket.transport.head).to.be('___eio[0](');
           done();
@@ -84,19 +83,19 @@ describe('JSONP', function () {
     });
   });
 
-  describe('messages', function () {
-    it('should arrive from client to server and back (pollingJSONP)', function (done) {
-      var engine = listen( { allowUpgrades: false, transports: ['polling'] }, function (port) {
-        var socket = new eioc.Socket('ws://localhost:' + port
+  describe('messages', function() {
+    it('should arrive from client to server and back (pollingJSONP)', function(done) {
+      var engine = listen( { allowUpgrades: false, transports: ['polling'] }, function(port) {
+        var socket = new lioc.Socket('ws://localhost:' + port
           , { transports: ['polling'], forceJSONP: true, upgrade: false });
-        engine.on('connection', function (conn) {
-          conn.on('message', function (msg) {
+        engine.on('connection', function(conn) {
+          conn.on('message', function(msg) {
             conn.send('a');
           });
         });
-        socket.on('open', function () {
+        socket.on('open', function() {
           socket.send('a');
-          socket.on('message', function (msg) {
+          socket.on('message', function(msg) {
             expect(socket.transport.query.j).to.not.be(undefined);
             expect(msg).to.be('a');
             done();
@@ -106,25 +105,25 @@ describe('JSONP', function () {
     }); 
   });
   
-  describe('close', function () {
-    it('should trigger when server closes a client', function (done) {
-      var engine = listen( { allowUpgrades: false, transports: ['polling'] }, function (port) {
-          var socket = new eioc.Socket('ws://localhost:' + port
+  describe('close', function() {
+    it('should trigger when server closes a client', function(done) {
+      var engine = listen( { allowUpgrades: false, transports: ['polling'] }, function(port) {
+          var socket = new lioc.Socket('ws://localhost:' + port
             , { transports: ['polling'], forceJSONP: true, upgrade: false })
             , total = 2;
 
-        engine.on('connection', function (conn) {
-          conn.on('close', function (reason) {
+        engine.on('connection', function(conn) {
+          conn.on('close', function(reason) {
             expect(reason).to.be('forced close');
             --total || done();
           });
-          setTimeout(function () {
+          setTimeout(function() {
             conn.close();
           }, 10);
         });
 
-        socket.on('open', function () {
-          socket.on('close', function (reason) {
+        socket.on('open', function() {
+          socket.on('close', function(reason) {
             expect(reason).to.be('transport close');
             --total || done();
           });
@@ -132,27 +131,27 @@ describe('JSONP', function () {
       });
     });
 
-    it('should trigger when client closes', function (done) {
-      var engine = listen( { allowUpgrades: false, transports: ['polling'] }, function (port) {
-          var socket = new eioc.Socket('ws://localhost:' + port
+    it('should trigger when client closes', function(done) {
+      var engine = listen( { allowUpgrades: false, transports: ['polling'] }, function(port) {
+          var socket = new lioc.Socket('ws://localhost:' + port
             , { transports: ['polling'], forceJSONP: true, upgrade: false })
             , total = 2;
 
-        engine.on('connection', function (conn) {
-          conn.on('close', function (reason) {
+        engine.on('connection', function(conn) {
+          conn.on('close', function(reason) {
             expect(reason).to.be('transport close');
             --total || done();
           });
         });
 
-        socket.on('open', function () {
+        socket.on('open', function() {
           socket.send('a');
-          socket.on('close', function (reason) {
+          socket.on('close', function(reason) {
             expect(reason).to.be('forced close');
             --total || done();
           });
 
-          setTimeout(function () {
+          setTimeout(function() {
             socket.close();
           }, 10);
         });
